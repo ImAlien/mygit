@@ -10,6 +10,12 @@ import  zlib
 argparser = argparse.ArgumentParser(description="Process the commands")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
 argsubparsers.required = True
+argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repository.")
+argsp.add_argument("path",
+                   metavar="directory",
+                   nargs="?",
+                   default=".",
+                   help="Where to create the repository.")
 
 
 def repo_path(repo, *path):
@@ -51,8 +57,8 @@ def repo_create(path):
     if os.path.exists(repo.worktree):
         if not os.path.isdir(repo.worktree):
             raise Exception ("%s is not a directory!" % path)
-        if os.listdir(repo.worktree):
-            raise Exception("%s is not empty!" % path)
+        if not os.listdir(repo.worktree):
+            raise Exception("%s is empty!" % path)
     else:
         os.makedirs(repo.worktree)
 
@@ -93,7 +99,7 @@ class GitRepository(object):
 
     def __init__(self, path, force=False):
         self.worktree = path
-        self.gitdir = os.path.join(path, ".git")
+        self.gitdir = os.path.join(path, ".mygit")
 
         if not (force or os.path.isdir(self.gitdir)):
             raise Exception("Not a Git repository %s" % path)
@@ -129,3 +135,38 @@ def main(argv=sys.argv[1:]):
     elif args.command == "rm"          : cmd_rm(args)
     elif args.command == "show-ref"    : cmd_show_ref(args)
     elif args.command == "tag"         : cmd_tag(args)
+
+def cmd_init(args):
+    repo_create(args.path)
+def cmd_add(args):
+    pass
+def cmd_cat_file(args):
+    pass
+def cmd_checkout(args):
+    pass
+def cmd_commit(args):
+    pass
+def cmd_hash_object(args):
+    pass
+def cmd_add(args):
+    pass
+def cmd_log(args):
+    pass
+def cmd_ls_tree(args):
+    pass
+def cmd_merge(args):
+    pass
+def cmd_rebase(args):
+    pass
+def cmd_rev_parse(args):
+    pass
+def cmd_rm(args):
+    pass
+def cmd_show_ref(args):
+    pass
+def cmd_tag(args):
+    pass
+
+if __name__ == '__main__':
+    main('init'.split())
+
