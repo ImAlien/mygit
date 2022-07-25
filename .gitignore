@@ -9,5 +9,5 @@
 *.log
 
 #output
-
+**/__pycache__
 .mygit

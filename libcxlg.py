@@ -10,15 +10,16 @@ import  zlib
 argparser = argparse.ArgumentParser(description="Process the commands")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
 argsubparsers.required = True
+#init
 argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repository.")
 argsp.add_argument("path",
                    metavar="directory",
                    nargs="?",
                    default=".",
                    help="Where to create the repository.")
+#cat-file
 argsp = argsubparsers.add_parser("cat-file",
                                  help="Provide content of repository objects")
-
 argsp.add_argument("type",
                    metavar="type",
                    choices=["blob", "commit", "tag", "tree"],
@@ -27,7 +28,7 @@ argsp.add_argument("type",
 argsp.add_argument("object",
                    metavar="object",
                    help="The object to display")
-
+#hash-object
 argsp = argsubparsers.add_parser(
     "hash-object",
     help="Compute object ID and optionally creates a blob from a file")
@@ -46,6 +47,8 @@ argsp.add_argument("-w",
 
 argsp.add_argument("path",
                    help="Read object from <file>")
+
+
 def repo_path(repo, *path):
     """Compute path under repo's gitdir."""
     return os.path.join(repo.gitdir, *path)
@@ -300,6 +303,54 @@ def object_hash(fd, fmt, repo=None):
         raise Exception("Unknown type %s!" % fmt)
 
     return object_write(obj, repo)
+def kvlm_parse(raw, start=0, dct=None):
+    if not dct:
+        dct = collections.OrderedDict()
+        # You CANNOT declare the argument as dct=OrderedDict() or all
+        # call to the functions will endlessly grow the same dict.
+
+    # We search for the next space and the next newline.
+    spc = raw.find(b' ', start)
+    nl = raw.find(b'\n', start)
+
+    # If space appears before newline, we have a keyword.
+
+    # Base case
+    # =========
+    # If newline appears first (or there's no space at all, in which
+    # case find returns -1), we assume a blank line.  A blank line
+    # means the remainder of the data is the message.
+    if (spc < 0) or (nl < spc):
+        assert(nl == start)
+        dct[b''] = raw[start+1:]
+        return dct
+
+    # Recursive case
+    # ==============
+    # we read a key-value pair and recurse for the next.
+    key = raw[start:spc]
+
+    # Find the end of the value.  Continuation lines begin with a
+    # space, so we loop until we find a "\n" not followed by a space.
+    end = start
+    while True:
+        end = raw.find(b'\n', end+1)
+        if raw[end+1] != ord(' '): break
+
+    # Grab the value
+    # Also, drop the leading space on continuation lines
+    value = raw[spc+1:end].replace(b'\n ', b'\n')
+
+    # Don't overwrite existing data contents
+    if key in dct:
+        if type(dct[key]) == list:
+            dct[key].append(value)
+        else:
+            dct[key] = [ dct[key], value ]
+    else:
+        dct[key]=value
+
+    return kvlm_parse(raw, start=end+1, dct=dct)
 def cmd_add(args):
     pass
 def cmd_log(args):
